@@ -24,7 +24,7 @@ var snake = [
     {x: 3, y: N >> 1},
     {x: 4, y: N >> 1},
 ];
-var food = {x: 12, y: N >> 1};
+var food = {x: 10, y: N >> 1};
 var score = 0;
 
 draw();
