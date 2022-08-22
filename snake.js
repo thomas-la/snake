@@ -19,23 +19,31 @@ const oppositeKey = {
     'ArrowDown' : 'ArrowUp',
     'ArrowRight' : 'ArrowLeft',
 }
+const initMsg = "Press ARROW KEYS to move snake...";
 
-var startMsg = "Press ARROW KEYS to move snake...";
+var pauseMsg = initMsg;
 var lastKey;  // for knowing which way to go at tick
 var lastDir;  // for preventing snake going back into self
-var snake, food, score, gameOver, timer;
+var snake, food, score, paused;
+var timer;
 
-reset()
+reset();
+paused = true;  // pause game initially
 draw();
 
 document.addEventListener('keydown', e => {
+    if (paused) {
+        var start = pauseMsg == initMsg && validKeys.has(e.key);
+        var playAgain = pauseMsg != initMsg && e.key == "Enter";
+        if (start || playAgain) {
+            reset()
+            timer = setInterval(tick, 150);
+            paused = false;
+        }
+    }
     if (validKeys.has(e.key) && e.key != oppositeKey[lastDir]) {
         lastKey = e.key;
     }
-    if (gameOver && e.key == "Enter") {
-        reset();
-    }
-
 });
 
 function reset() {
@@ -49,8 +57,7 @@ function reset() {
     ];
     food = {x: 10, y: N >> 1};
     score = 1;
-    gameOver = false;
-    timer = setInterval(tick, 150);
+    paused = false;
 }
 
 function tick() {
@@ -83,8 +90,8 @@ function moveSnake() {
     if (snakeContains(newHead) || nx < 0 || ny < 0 || nx >= N || ny >= N) {
         snake.unshift(tail);
         clearInterval(timer);
-        startMsg = "Game over! Press ENTER to play again..."
-        gameOver = true;
+        pauseMsg = "Game over! Press ENTER to play again..."
+        paused = true;
     } else {
         snake.push(newHead)
         // did we eat food?
@@ -135,11 +142,11 @@ function draw() {
     ctx.fillRect(food.x*TILE_SIZE, food.y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
     ctx.fillStyle = "#000000"
     ctx.fillText(score, (food.x+.5)*TILE_SIZE, (food.y+1)*TILE_SIZE-Y_PAD);
-    if (gameOver) {
+    if (paused) {
         ctx.fillStyle = "#F0F0F080"
         var msg_y = food.y != N-1 ? N-1 : 0;
         ctx.fillRect(0, msg_y*TILE_SIZE, N*TILE_SIZE, TILE_SIZE);
         ctx.fillStyle = "#000000";
-        ctx.fillText(startMsg, WIDTH/2, (msg_y+1)*TILE_SIZE-Y_PAD);
+        ctx.fillText(pauseMsg, WIDTH/2, (msg_y+1)*TILE_SIZE-Y_PAD);
     }
 }
