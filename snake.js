@@ -1,13 +1,16 @@
-const N = 15;         // Grid dimensions: N x N
+const N = 15;           // Grid dimensions: N x N
 const TILE_SIZE = 60;   // Size (px) of squares in grid
 
 const WIDTH = N * TILE_SIZE;
 const HEIGHT = N * TILE_SIZE;
 
-var canvas = document.getElementById("canvas");
+const canvas = document.getElementById("canvas");
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
-var ctx = canvas.getContext("2d");
+
+const ctx = canvas.getContext("2d");
+ctx.font = "30px Monospace";
+ctx.textAlign = "center"
 
 const validKeys = new Set(['ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight']);
 const oppositeKey = {
@@ -16,28 +19,47 @@ const oppositeKey = {
     'ArrowDown' : 'ArrowUp',
     'ArrowRight' : 'ArrowLeft',
 }
-var lastKey = 'ArrowRight';  // for knowing which way to go at tick
-var lastDir = 'ArrowRight';  // for preventing snake going back into self
-var snake = [
-    {x: 1, y: N >> 1},
-    {x: 2, y: N >> 1},
-    {x: 3, y: N >> 1},
-    {x: 4, y: N >> 1},
-];
-var food = {x: 10, y: N >> 1};
-var score = 0;
 
+var startMsg = "Press ARROW KEYS to move snake...";
+var lastKey;  // for knowing which way to go at tick
+var lastDir;  // for preventing snake going back into self
+var snake, food, score, gameOver, timer;
+
+reset()
 draw();
+
 document.addEventListener('keydown', e => {
     if (validKeys.has(e.key) && e.key != oppositeKey[lastDir]) {
         lastKey = e.key;
     }
+    if (gameOver && e.key == "Enter") {
+        reset();
+    }
+
 });
-timer = setInterval(tick, 150);
+
+function reset() {
+    lastKey = 'ArrowRight';  // for knowing which way to go at tick
+    lastDir = 'ArrowRight';  // for preventing snake going back into self
+    snake = [
+        {x: 1, y: N >> 1},
+        {x: 2, y: N >> 1},
+        {x: 3, y: N >> 1},
+        {x: 4, y: N >> 1},
+    ];
+    food = {x: 10, y: N >> 1};
+    score = 1;
+    gameOver = false;
+    timer = setInterval(tick, 150);
+}
 
 function tick() {
+    moveSnake();
+    draw();
+}
 
-    // UPDATE BOARD
+function moveSnake() {
+
     var tail = snake.shift();
     var dx = 0
     var dy = 0;
@@ -61,7 +83,8 @@ function tick() {
     if (snakeContains(newHead) || nx < 0 || ny < 0 || nx >= N || ny >= N) {
         snake.unshift(tail);
         clearInterval(timer);
-        alert('Game over!');
+        startMsg = "Game over! Press ENTER to play again..."
+        gameOver = true;
     } else {
         snake.push(newHead)
         // did we eat food?
@@ -79,9 +102,6 @@ function tick() {
             lastKey = key;  // in case modified lastKey not suitable
         }
     }
-
-    draw();
-
 }
 
 function snakeContains(p) {
@@ -110,10 +130,16 @@ function draw() {
     ctx.fillRect(head.x*TILE_SIZE, head.y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
     // draw food
+    const Y_PAD = 20;
     ctx.fillStyle = "#FF0000";
     ctx.fillRect(food.x*TILE_SIZE, food.y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-    ctx.fillStyle = "#000000";
-    ctx.font = "48px Monospace";
-    ctx.fillText("Score: " + score, 12, HEIGHT - 12);
+    ctx.fillStyle = "#000000"
+    ctx.fillText(score, (food.x+.5)*TILE_SIZE, (food.y+1)*TILE_SIZE-Y_PAD);
+    if (gameOver) {
+        ctx.fillStyle = "#F0F0F080"
+        var msg_y = food.y != N-1 ? N-1 : 0;
+        ctx.fillRect(0, msg_y*TILE_SIZE, N*TILE_SIZE, TILE_SIZE);
+        ctx.fillStyle = "#000000";
+        ctx.fillText(startMsg, WIDTH/2, (msg_y+1)*TILE_SIZE-Y_PAD);
+    }
 }
